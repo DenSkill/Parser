@@ -34,9 +34,12 @@ class Connector:
             json_reader = json.load(file)
             print(len(json_reader))
 
-    def insert(self, data: list) -> None:
-        """Запись данных в файл с сохранением структуры и исходных данных"""
-        pass
+    def insert(self, data):
+        """
+        Запись данных в файл с сохранением структуры и исходных данных
+        """
+        with open('../Parser/filename.json', 'a', encoding="UTF-8") as file:
+            json.dump(data, file, indent=2, ensure_ascii=False)
 
     def select(self, query: dict) -> list:
         """
