@@ -1,5 +1,4 @@
 import json
-import os
 
 
 class Connector:
@@ -19,24 +18,24 @@ class Connector:
         return self.__data_file
 
     @data_file.setter
-    def data_file(self, value: str):
+    def data_file(self, value: str) -> None:
+        """Установка файла"""
         self.__data_file = value
         self.__connect()
 
-    def __connect(self):
-        """
-        Проверка на существование файла с данными и
-        создание его при необходимости
-        Также проверить на деградацию и возбудить исключение
-        если файл потерял актуальность в структуре данных
-        """
-        with open(self.__data_file, 'r', encoding='UTF-8') as file:
-            json_reader = json.load(file)
-            print(len(json_reader))
+    def __connect(self) -> None:
+        """Перезаписывает файл на [] или создает новый и записывает []"""
+        with open(self.__data_file, 'w') as file:
+            json.dump([], file)
 
     def insert(self, data: list) -> None:
         """Запись данных в файл с сохранением структуры и исходных данных"""
-        pass
+
+        with open(self.__data_file, 'r', encoding='UTF-8') as file:
+            data_json = json.load(file)
+
+        with open(self.__data_file, 'w', encoding='UTF-8') as file:
+            json.dump(data_json + data, file, indent=2, ensure_ascii=False)
 
     def select(self, query: dict) -> list:
         """
@@ -45,12 +44,35 @@ class Connector:
         фильтрации, а значение - это искомое значение, если
         передан пустой словарь, возвращает все данные файла
         """
-        pass
+        result = []
+        with open(self.__data_file) as f:
+            data = json.load(f)
 
-    def delete(self, query):
+        if not query:
+            return data
+
+        for item in data:
+            if all(item.get(key) == value for key, value in query.items()):
+                result.append(item)
+
+        return result
+
+    def delete(self, query: dict) -> list | None:
         """
         Удаление записей из файла, которые соответствуют запросу,
         как в методе select. Если в query передан пустой словарь, то
         функция удаления не сработает
         """
-        pass
+        if not query:
+            return
+
+        with open(self.__data_file) as f:
+            data = json.load(f)
+
+        result = []
+        for item in data:
+            if not all(item.get(key) == value for key, value in query.items()):
+                result.append(item)
+
+        with open(self.__data_file, 'w') as file:
+            json.dump(result, file)
