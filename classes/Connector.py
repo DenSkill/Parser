@@ -1,4 +1,5 @@
 import json
+import os
 
 
 class Connector:
@@ -22,19 +23,20 @@ class Connector:
         self.__data_file = value
         self.__connect()
 
-    def __connect(self) -> None:
-        """Перезаписывает файл на [] или создает новый и записывает []"""
-        with open(self.__data_file, 'w') as file:
-            json.dump([], file)
+    def __connect(self):
+        """
+        Проверка на существование файла с данными и
+        создание его при необходимости
+        Также проверить на деградацию и возбудить исключение
+        если файл потерял актуальность в структуре данных
+        """
+        with open(self.__data_file, 'r', encoding='UTF-8') as file:
+            json_reader = json.load(file)
+            print(len(json_reader))
 
     def insert(self, data: list) -> None:
         """Запись данных в файл с сохранением структуры и исходных данных"""
-
-        with open(self.__data_file, 'r', encoding='UTF-8') as file:
-            data_json = json.load(file)
-
-        with open(self.__data_file, 'w', encoding='UTF-8') as file:
-            json.dump(data_json + data, file, indent=2, ensure_ascii=False)
+        pass
 
     def select(self, query: dict) -> list:
         """
