@@ -1,71 +1,44 @@
 import requests
+from classes.eng import Engine
 
-from classes.Engine import Engine
 
-
-class HH(Engine):
-    URL = 'https://api.hh.ru/vacancies'
-
-    def __init__(self, search: str, experience=None):
-        """Инициализируется запросом пользователя"""
-        self.params = {'text': f'{search}', 'page': 0, 'per_page': 100}
-        if experience is not None:
-            self.params['experience'] = experience
+class HeadHunter(Engine):
+    """Класс для парсинга вакансий с сайта HeadHunter"""
 
     @staticmethod
-    def get_format_date(date: str) -> str:
-        """Возвращает отформатированную дату"""
-        date_format = datetime.datetime.fromisoformat(date).strftime("%d.%m.%Y %X")
-        return date_format
+    def _get_salary(salary_info: dict):
+        """Обработка поля salary(зарплата): предпочтительно выводить зарплату 'от', если же она не указана,
+                то выводить зарплату 'до'. Или выводить 0, если поле отсутствует"""
+        if salary_info:
+            if salary_info.get('to'):
+                return salary_info['to']
+            if salary_info.get('from'):
+                return salary_info['from']
+        return 0
 
-    def get_request(self):
-        """Запрос вакансий через API"""
-        try:
-            response = requests.get(self.URL, self.params)
-            if response.status_code == 200:
-                return response.json()
+    @staticmethod
+    def _get_remote_work(remote_work_info: dict):
+        """Обработка поля remote_work(удаленная работа)"""
+        if remote_work_info:
+            if remote_work_info['id'] == 'fullDay':
+                return 'В офисе'
+            if remote_work_info['id'] == 'remote':
+                return 'Удаленно'
+        return 'Другое'
 
-        except requests.RequestException:
-            print('Не удается получить данные')
-
-    def get_info_vacancy(self, data: dict) -> dict:
-        """Получаем информацию о вакансии"""
-        info = {
-            'source': 'HeadHunter',
-            'name': data['name'],
-            'url': data['alternate_url'],
-            'description': data.get('snippet').get('responsibility'),
-            'salary': data.get('salary'),
-            'date_published': self.get_format_date(data['published_at'])
-        }
-        return info
-
-    def get_vacancies(self) -> list:
-        """Получаем информацию о вакансии для дальнейшей записи в файл и создания экземпляров Vacancy"""
+    def get_request(self, keyword):
+        """Парсинг 500 вакансий и создание из них объекта типа list"""
         vacancies = []
-        page = 0
-        while True:
-            self.params['page'] = page
-            data = self.get_request()
-            for vacancy in data.get('items'):
-                if vacancy.get('salary') is not None and vacancy.get('salary').get('currency') is not None:
-                    # если зп рубли, добавляем в список, если нет, пропускаем
-                    if vacancy.get('salary').get('currency') == "RUR":
-                        vacancies.append(self.get_info_vacancy(vacancy))
-                    else:
-                        continue
-
-                # если зп не указана, добавляем в список
-                else:
-                    vacancies.append(self.get_info_vacancy(vacancy))
-
-            if data.get('found') == len(vacancies):
-                break
-
-            elif len(vacancies) >= 500:
-                break
-
-            else:
-                page += 1
-
+        for page in range(5):
+            response = requests.get(f"https://api.hh.ru/vacancies?text={keyword}",
+                                    params={'per_page': '100', 'page': page}).json()
+            for vacancy in response['items']:
+                vacancies.append({
+                    "name": vacancy['name'],
+                    "company_name": vacancy['employer']['name'],
+                    "url": vacancy['alternate_url'],
+                    "description": vacancy['snippet']['requirement'],
+                    "remote_work": self._get_remote_work(vacancy.get('schedule', {})),
+                    "salary": self._get_salary(vacancy.get('salary', {})),
+                })
         return vacancies
