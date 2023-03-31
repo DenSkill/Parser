@@ -7,8 +7,7 @@ class HeadHunter(Engine):
 
     @staticmethod
     def _get_salary(salary_info: dict):
-        """Обработка поля salary(зарплата): предпочтительно выводить зарплату 'от', если же она не указана,
-                то выводить зарплату 'до'. Или выводить 0, если поле отсутствует"""
+        """Обработка поля salary(зарплата)"""
         if salary_info:
             if salary_info.get('to'):
                 return salary_info['to']

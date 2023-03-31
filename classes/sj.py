@@ -1,8 +1,6 @@
 import requests
 from classes.eng import Engine
-import os
-
-api_key = os.getenv('SUPERJOB_API_KEY')
+from classes.utils import api_key
 
 
 class SuperJob(Engine):
@@ -10,8 +8,7 @@ class SuperJob(Engine):
 
     @staticmethod
     def _get_salary(salary_info: dict):
-        """Обработка поля salary(зарплата): предпочтительно выводить зарплату 'от', если же она не указана,
-        то выводить зарплату 'до'. Или выводить 0, если поле отсутствует"""
+        """Обработка поля salary(зарплата)"""
         if salary_info.get('payment_to'):
             return salary_info['payment_to']
         if salary_info.get('payment_from'):
@@ -35,7 +32,7 @@ class SuperJob(Engine):
             response = requests.get('https://api.superjob.ru/2.0/vacancies/',
                                     headers={'X-Api-App-Id': api_key},
                                     params={"keywords": keyword, "count": 100,
-                                            "page": page}).json()#['objects'] ???
+                                            "page": page}).json()
             for vacancy in response['objects']:
                 vacancies.append({
                     "name": vacancy['profession'],
