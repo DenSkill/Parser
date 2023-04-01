@@ -1,6 +1,10 @@
 import requests
 from classes.eng import Engine
-from classes.utils import api_key
+import os
+from dotenv import load_dotenv, find_dotenv
+
+load_dotenv(find_dotenv())
+api_key = os.getenv('api_key')
 
 
 class SuperJob(Engine):
